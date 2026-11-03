@@ -1,0 +1,324 @@
+/* ==========================================================================
+   NEON GRID — a cyberpunk skin for 2048.
+   Loaded after main.css, so it only overrides looks: no layout, no logic.
+   Every colour lives in the :root block below — edit there to re-theme.
+   ========================================================================== */
+
+:root {
+  --bg-deep:     #04060f;
+  --bg-mid:      #080d1c;
+  --ink:         #8fb6cf;
+  --ink-bright:  #e8fbff;
+  --accent:      #16e0ff;
+  --accent-warm: #ff2fc4;
+
+  --tile-2:    #16e0ff;
+  --tile-4:    #19c8ff;
+  --tile-8:    #2aa7ff;
+  --tile-16:   #4c84ff;
+  --tile-32:   #7a5cff;
+  --tile-64:   #a742ff;
+  --tile-128:  #d132f0;
+  --tile-256:  #ff2fc4;
+  --tile-512:  #ff3a86;
+  --tile-1024: #ff6a4d;
+  --tile-2048: #ffd23f;
+  --tile-super: #ffffff;
+}
+
+/* --- page ----------------------------------------------------------------- */
+
+html, body {
+  background: var(--bg-deep);
+  color: var(--ink);
+  font-family: "Share Tech Mono", Consolas, "SFMono-Regular", "Courier New", monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Horizon glow plus a grid floor, painted behind everything. */
+body {
+  position: relative;
+  min-height: 100vh;
+  background-color: var(--bg-deep);
+  background-image:
+    radial-gradient(120% 70% at 50% -10%, rgba(22, 224, 255, 0.18) 0%, rgba(22, 224, 255, 0) 60%),
+    radial-gradient(90% 60% at 50% 110%, rgba(255, 47, 196, 0.14) 0%, rgba(255, 47, 196, 0) 65%),
+    linear-gradient(var(--bg-mid), var(--bg-deep));
+  background-attachment: fixed;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(22, 224, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 224, 255, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(120% 100% at 50% 40%, #000 20%, transparent 85%);
+  mask-image: radial-gradient(120% 100% at 50% 40%, #000 20%, transparent 85%);
+}
+
+/* Faint CRT scanlines over the top. Non-interactive. */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 999;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.022) 0px,
+    rgba(255, 255, 255, 0.022) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- heading -------------------------------------------------------------- */
+
+h1.title {
+  font-family: Orbitron, "Share Tech Mono", Consolas, monospace;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--ink-bright);
+  text-shadow:
+    0 0 6px rgba(232, 251, 255, 0.9),
+    0 0 22px var(--accent),
+    0 0 48px rgba(22, 224, 255, 0.55);
+}
+
+/* --- score panels --------------------------------------------------------- */
+
+.score-container, .best-container {
+  background: rgba(11, 18, 34, 0.9);
+  color: var(--ink-bright);
+  border-radius: 2px;
+  box-shadow:
+    inset 0 0 0 1px rgba(22, 224, 255, 0.45),
+    0 0 14px -3px rgba(22, 224, 255, 0.6);
+  text-shadow: 0 0 10px rgba(22, 224, 255, 0.8);
+}
+
+.score-container:after, .best-container:after {
+  color: var(--accent);
+  letter-spacing: 2px;
+  opacity: 0.85;
+}
+
+.score-container:after { content: "SCORE"; }
+
+.best-container:after { content: "BEST"; }
+
+.score-container .score-addition, .best-container .score-addition {
+  color: var(--accent);
+  text-shadow: 0 0 12px var(--accent);
+}
+
+/* --- prose and chrome ----------------------------------------------------- */
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(22, 224, 255, 0.35);
+}
+
+a:hover {
+  color: var(--ink-bright);
+}
+
+strong.important {
+  color: var(--accent-warm);
+  letter-spacing: 1px;
+}
+
+.game-intro strong {
+  color: var(--accent);
+}
+
+hr {
+  border-bottom: 1px solid rgba(22, 224, 255, 0.18);
+}
+
+.restart-button {
+  background: rgba(22, 224, 255, 0.08);
+  color: var(--accent);
+  border-radius: 2px;
+  border-bottom: none;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 0 0 1px rgba(22, 224, 255, 0.55),
+    0 0 16px -4px rgba(22, 224, 255, 0.7);
+  text-shadow: 0 0 10px rgba(22, 224, 255, 0.7);
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.restart-button:hover {
+  background: rgba(22, 224, 255, 0.2);
+  color: var(--ink-bright);
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 26px -4px var(--accent);
+}
+
+/* --- board ---------------------------------------------------------------- */
+
+.game-container {
+  background: rgba(8, 13, 28, 0.85);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 0 1px rgba(22, 224, 255, 0.3),
+    inset 0 0 60px -20px rgba(22, 224, 255, 0.35),
+    0 0 50px -12px rgba(22, 224, 255, 0.4);
+}
+
+.grid-cell {
+  border-radius: 2px;
+  background: rgba(22, 224, 255, 0.035);
+  box-shadow: inset 0 0 0 1px rgba(22, 224, 255, 0.12);
+}
+
+/* --- tiles ---------------------------------------------------------------- */
+/* One shared look; each value only swaps the --c hue below. The outline is an
+   inset shadow rather than a border so tile geometry stays untouched. */
+
+.game-container .tile .tile-inner {
+  --c: var(--tile-2);
+  border-radius: 2px;
+  font-weight: 700;
+  font-size: 48px;
+  letter-spacing: -1px;
+  background: #0b1222;
+  background: color-mix(in srgb, var(--c) 15%, #080d1a);
+  color: var(--c);
+  box-shadow:
+    inset 0 0 0 2px var(--c),
+    inset 0 0 22px -6px var(--c),
+    0 0 16px -3px var(--c);
+  text-shadow: 0 0 12px var(--c);
+}
+
+.game-container .tile.tile-2 .tile-inner { --c: var(--tile-2); }
+
+.game-container .tile.tile-4 .tile-inner { --c: var(--tile-4); }
+
+.game-container .tile.tile-8 .tile-inner { --c: var(--tile-8); }
+
+.game-container .tile.tile-16 .tile-inner { --c: var(--tile-16); }
+
+.game-container .tile.tile-32 .tile-inner { --c: var(--tile-32); }
+
+.game-container .tile.tile-64 .tile-inner { --c: var(--tile-64); }
+
+/* Three digits: ease the type down so it still fits the tile. */
+.game-container .tile.tile-128 .tile-inner { --c: var(--tile-128); font-size: 40px; }
+
+.game-container .tile.tile-256 .tile-inner { --c: var(--tile-256); font-size: 40px; }
+
+.game-container .tile.tile-512 .tile-inner { --c: var(--tile-512); font-size: 40px; }
+
+/* Four digits. */
+.game-container .tile.tile-1024 .tile-inner { --c: var(--tile-1024); font-size: 31px; }
+
+.game-container .tile.tile-2048 .tile-inner { --c: var(--tile-2048); font-size: 31px; }
+
+/* Past 2048 the numbers get long, so the type gets small and the tile goes
+   white-hot. */
+.game-container .tile.tile-super .tile-inner {
+  --c: var(--tile-super);
+  font-size: 24px;
+  color: #04060f;
+  background: linear-gradient(145deg, #ffffff 0%, #c9f4ff 100%);
+  text-shadow: none;
+  box-shadow:
+    inset 0 0 0 2px #ffffff,
+    0 0 34px -2px rgba(22, 224, 255, 0.95),
+    0 0 70px -12px rgba(255, 255, 255, 0.7);
+}
+
+/* The winning tile pulses. */
+.game-container .tile.tile-2048 .tile-inner,
+.game-container .tile.tile-super .tile-inner {
+  animation: neon-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes neon-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.25); }
+}
+
+/* --- win / lose overlay --------------------------------------------------- */
+
+.game-container .game-message {
+  background: rgba(4, 6, 15, 0.86);
+  color: var(--ink-bright);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.game-container .game-message p {
+  font-family: Orbitron, "Share Tech Mono", Consolas, monospace;
+  font-size: 44px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px var(--accent-warm);
+}
+
+.game-container .game-message a {
+  background: rgba(22, 224, 255, 0.1);
+  color: var(--accent);
+  border-radius: 2px;
+  border-bottom: none;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgba(22, 224, 255, 0.55);
+}
+
+.game-container .game-message a:hover {
+  background: rgba(22, 224, 255, 0.22);
+  color: var(--ink-bright);
+}
+
+.game-container .game-message.game-won {
+  background: rgba(10, 6, 20, 0.86);
+  color: var(--tile-2048);
+}
+
+.game-container .game-message.game-won p {
+  text-shadow: 0 0 24px var(--tile-2048);
+}
+
+/* --- small screens -------------------------------------------------------- */
+/* main.css shrinks tiles to 58px here, so the type sizes above need their own
+   smaller set at matching specificity. */
+
+@media screen and (max-width: 520px) {
+  h1.title { letter-spacing: 2px; }
+
+  .game-container .tile .tile-inner { font-size: 26px; letter-spacing: 0; }
+
+  .game-container .tile.tile-128 .tile-inner,
+  .game-container .tile.tile-256 .tile-inner,
+  .game-container .tile.tile-512 .tile-inner { font-size: 21px; }
+
+  .game-container .tile.tile-1024 .tile-inner,
+  .game-container .tile.tile-2048 .tile-inner { font-size: 16px; }
+
+  .game-container .tile.tile-super .tile-inner { font-size: 13px; }
+
+  body::before { background-size: 32px 32px; }
+}
